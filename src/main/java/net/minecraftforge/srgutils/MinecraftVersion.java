@@ -54,15 +54,17 @@ public class MinecraftVersion implements Comparable<MinecraftVersion> {
         if (value >= 2303 && value <= 2307) return "1.19.4";
         if (value >= 2312 && value <= 2318) return "1.20";
         if (value >= 2320 && value <= 2330) return "1.20.1";
-        if (value >= 2331 && value <= 2341) return "1.20.2";
-        if (value >= 2342 && value <= 2346) return "1.20.3";
+        if (value >= 2331 && value <= 2335) return "1.20.2";
+        if (value >= 2340 && value <= 2346) return "1.20.3";
         if (value >= 2347 && value <= 2350) return "1.20.4";
         if (value >= 2351 && value <= 2414) return "1.20.5";
         if (value >= 2418 && value <= 2421) return "1.21";
         if (value >= 2433 && value <= 2440) return "1.21.2";
         if (value >= 2444 && value <= 2446) return "1.21.4";
         if (value >= 2502 && value <= 2510) return "1.21.5";
-        if (value >= 2514 && value <= 9999) return "1.21.6";
+        if (value >= 2515 && value <= 2521) return "1.21.6";
+        if (value >= 2531 && value <= 2537) return "1.21.9";
+        if (value >= 2541 && value <= 2546) return "1.21.11";
         throw new IllegalArgumentException("Invalid snapshot date: " + value);
     }
 
@@ -98,7 +100,7 @@ public class MinecraftVersion implements Comparable<MinecraftVersion> {
         String preA = Character.toString((char)('a' - 1));
 
         if ("15w14a".equals(lower))                    // 2015 April Fools
-            return new MinecraftVersion(Type.APRIL_FOOLS, version, 14, 15, 0, "a", splitDots("1.10"));
+            return new MinecraftVersion(Type.APRIL_FOOLS, version, 14, 15, 0, "a", splitDots("1.9"));
         else if ("1.rv-pre1".equals(lower))            // 2016 April Fools
             return new MinecraftVersion(Type.APRIL_FOOLS, version, 14, 16, 0, preA, splitDots("1.9.3"));
         else if ("3d shareware v1.34".equals(lower))   // 2019 April Fools
@@ -148,7 +150,13 @@ public class MinecraftVersion implements Comparable<MinecraftVersion> {
         } else {
             int pre = 0;
             String nearest = version;
-            if (version.contains("-pre")) {
+            // The new versioning system https://www.minecraft.net/en-us/article/minecraft-new-version-numbering-system
+            // They did not specify pre-release or release candidate naming system.
+            // The only one we've seen so far is snapshot. So i'll add that and add the others when they show up
+            if (version.contains("-snapshot-")) {
+                String[] pts = version.split("-snapshot-");
+                return new MinecraftVersion(Type.SNAPSHOT, version, Integer.parseInt(pts[1]), -1, 0, null, splitDots(pts[0]));
+            } else if (version.contains("-pre")) {
                 String[] pts = version.split("-pre");
                 pre = Integer.parseInt(pts[1]);
                 nearest = pts[0];
@@ -219,18 +227,22 @@ public class MinecraftVersion implements Comparable<MinecraftVersion> {
 
         switch (this.type) {
             case ALPHA:
-            case BETA:
+            case BETA: {
                 int ret = compareFull(o);
                 if (ret != 0)                                    return ret;
                 if (this.revision == null && o.revision != null) return  1;
                 if (this.revision != null && o.revision == null) return -1;
                 return this.revision.compareTo(o.revision);
+            }
 
             case SNAPSHOT:
-            case APRIL_FOOLS:
+            case APRIL_FOOLS: {
+                int nearest = compareNearest(o);
+                if (nearest != 0) return nearest;
                 if (this.year != o.year) return this.year - o.year;
                 if (this.week != o.week) return this.week - o.week;
                 return this.revision.compareTo(o.revision);
+            }
 
             case RELEASE:
                 return compareFull(o);
@@ -240,7 +252,7 @@ public class MinecraftVersion implements Comparable<MinecraftVersion> {
         }
     }
 
-    private int compareFull(MinecraftVersion o) {
+    private int compareNearest(MinecraftVersion o) {
         for (int x = 0; x < this.nearest.length; x++) {
             if (x >= o.nearest.length) return 1;
             if (this.nearest[x] != o.nearest[x])
@@ -248,6 +260,12 @@ public class MinecraftVersion implements Comparable<MinecraftVersion> {
         }
         if (this.nearest.length < o.nearest.length)
             return -1;
+        return 0;
+    }
+
+    private int compareFull(MinecraftVersion o) {
+        int nearest = compareNearest(o);
+        if (nearest != 0) return nearest;
         if (this.type == Type.RELEASE && o.type != Type.RELEASE) return 1;
         if (this.type != Type.RELEASE && o.type == Type.RELEASE) return -1;
         //Release candidates have negative numbers to make them sort differently then pre releases.
