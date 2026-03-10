@@ -19,6 +19,7 @@ public class VersionList {
     //Just copy pasted with a little resorting from Mojang's version manifest, https://launchermeta.mojang.com/mc/game/version_manifest.json
     //We can't read this file directly, because its in strict release date order, not target version order
     private final String[] versions = new String[] {
+        "26.1-pre-1",
         "26.1-snapshot-11",
         "26.1-snapshot-10",
         "26.1-snapshot-9",
