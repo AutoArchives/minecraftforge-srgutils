@@ -628,7 +628,10 @@ class MappingFile implements IMappingFile {
                         default: throw new UnsupportedOperationException("Unknown format: " + format);
                     }
                 }
-
+                @Override
+                public String toString() {
+                    return getIndex() + " " + getOriginal() + ' ' + getMapped();
+                }
             }
         }
     }

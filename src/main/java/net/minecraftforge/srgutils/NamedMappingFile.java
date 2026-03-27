@@ -542,6 +542,11 @@ class NamedMappingFile implements INamedMappingFile, IMappingBuilder {
                 public IMethod build() {
                     return Method.this;
                 }
+
+                @Override
+                public String toString() {
+                    return getIndex() + " " + this.getNames();
+                }
             }
         }
     }
