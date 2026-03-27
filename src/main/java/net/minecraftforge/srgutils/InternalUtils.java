@@ -13,6 +13,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import net.minecraftforge.srgutils.IMappingFile.Format;
 
 class InternalUtils {
+    static final Comparator<String> NULL_SAFE = Comparator.nullsFirst(Comparator.naturalOrder());
     static IMappingFile load(InputStream in) throws IOException {
         INamedMappingFile named = loadNamed(in);
         return named.getMap(named.getNames().get(0), named.getNames().get(1));

@@ -117,26 +117,34 @@ class MappingFile implements IMappingFile {
         return buf.toString();
     }
 
+    private static final Comparator<INode> SORT = Comparator.comparing(INode::getOriginal);
+    private static final Comparator<IField> SORT_FIELD = (a, b) -> {
+        int ret = a.getMapped().compareTo(b.getMapped());
+        return ret != 0 ? ret : InternalUtils.NULL_SAFE.compare(a.getMappedDescriptor(), b.getMappedDescriptor());
+    };
+    private static final Comparator<IMethod> SORT_METHOD = Comparator.comparing(IMethod::getOriginal).thenComparing(IMethod::getDescriptor);
+    private static final Comparator<IParameter> SORT_PARAM = Comparator.comparingInt(IParameter::getIndex);
+
     @Override
     public void write(Path path, Format format, boolean reversed) throws IOException {
         List<String> lines = new ArrayList<>();
-        Comparator<INode> sort = reversed ? (a,b) -> a.getMapped().compareTo(b.getMapped()) : (a,b) -> a.getOriginal().compareTo(b.getOriginal());
+        IMappingFile map = reversed ? this.reverse() : this;
 
-        getPackages().stream().sorted(sort).forEachOrdered(pkg ->
-            write(lines, format, reversed, PACKAGE, pkg)
+        map.getPackages().stream().sorted(SORT).forEachOrdered(pkg ->
+            write(lines, format, false, PACKAGE, pkg)
         );
-        getClasses().stream().sorted(sort).forEachOrdered(cls -> {
-            write(lines, format, reversed, CLASS, cls);
+        map.getClasses().stream().sorted(SORT).forEachOrdered(cls -> {
+            write(lines, format, false, CLASS, cls);
 
-            cls.getFields().stream().sorted(sort).forEachOrdered(fld ->
-                write(lines, format, reversed, FIELD, fld)
+            cls.getFields().stream().sorted(SORT_FIELD).forEachOrdered(fld ->
+                write(lines, format, false, FIELD, fld)
             );
 
-            cls.getMethods().stream().sorted(sort).forEachOrdered(mtd -> {
-                write(lines, format, reversed, METHOD, mtd);
+            cls.getMethods().stream().sorted(SORT_METHOD).forEachOrdered(mtd -> {
+                write(lines, format, false, METHOD, mtd);
 
-                mtd.getParameters().stream().sorted((a,b) -> a.getIndex() - b.getIndex()).forEachOrdered(par ->
-                    write(lines, format, reversed, PARAMETER, par)
+                mtd.getParameters().stream().sorted(SORT_PARAM).forEachOrdered(par ->
+                    write(lines, format, false, PARAMETER, par)
                 );
             });
         });
@@ -144,7 +152,7 @@ class MappingFile implements IMappingFile {
         lines.removeIf(Objects::isNull);
 
         if (!format.isOrdered()) {
-            Comparator<String> linesort = (format == Format.SRG || format == Format.XSRG) ? InternalUtils::compareLines : (o1, o2) -> o1.compareTo(o2);
+            Comparator<String> linesort = (format == Format.SRG || format == Format.XSRG) ? InternalUtils::compareLines : Comparator.naturalOrder();
             lines.sort(linesort);
         }
 

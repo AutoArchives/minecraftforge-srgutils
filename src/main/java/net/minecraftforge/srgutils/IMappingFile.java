@@ -81,6 +81,12 @@ public interface IMappingFile {
     String remapClass(String desc);
     String remapDescriptor(String desc);
 
+    default void write(Path path) throws IOException {
+        write(path, Format.TSRG2);
+    }
+    default void write(Path path, Format format) throws IOException {
+        write(path, format, false);
+    }
     void write(Path path, Format format, boolean reversed) throws IOException;
 
     IMappingFile reverse();

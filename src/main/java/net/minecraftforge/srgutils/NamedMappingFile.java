@@ -56,6 +56,11 @@ class NamedMappingFile implements INamedMappingFile, IMappingBuilder {
     }
 
     @Override
+    public IMappingFile getMap() {
+        return getMap(this.names.get(0), this.names.get(1));
+    }
+
+    @Override
     public IMappingFile getMap(final String from, final String to) {
         String key = from + "_to_" + to;
         return mapCache.computeIfAbsent(key, k -> {
@@ -82,9 +87,17 @@ class NamedMappingFile implements INamedMappingFile, IMappingBuilder {
                 throw new IllegalArgumentException("Invalid order: Missing \"" + order[x] + "\" name");
         }
 
-
         List<String> lines = new ArrayList<>();
         Comparator<Named> sort = (a,b) -> a.getName(indexes[0]).compareTo(b.getName(indexes[0]));
+        Comparator<Cls.Field> sortField = (a,b) -> {
+            int ret = sort.compare(a, b);
+            return ret != 0 ? ret : InternalUtils.NULL_SAFE.compare(a.getDescriptor(indexes[0]), b.getDescriptor(indexes[0]));
+        };
+        Comparator<Cls.Method> sortMethod = (a,b) -> {
+            int ret = sort.compare(a, b);
+            return ret != 0 ? ret : a.getDescriptor(indexes[0]).compareTo(b.getDescriptor(indexes[0]));
+        };
+        Comparator<Cls.Method.Parameter> sortParam = Comparator.comparingInt(Cls.Method.Parameter::getIndex);
 
         getPackages().sorted(sort).forEachOrdered(pkg ->
             write(lines, format, indexes, PACKAGE, pkg.meta, pkg)
@@ -92,14 +105,14 @@ class NamedMappingFile implements INamedMappingFile, IMappingBuilder {
         getClasses().sorted(sort).forEachOrdered(cls -> {
             write(lines, format, indexes, CLASS, cls.meta, cls);
 
-            cls.getFields().sorted(sort).forEachOrdered(fld ->
+            cls.getFields().sorted(sortField).forEachOrdered(fld ->
                 write(lines, format, indexes, FIELD, fld.meta, fld)
             );
 
-            cls.getMethods().sorted(sort).forEachOrdered(mtd -> {
+            cls.getMethods().sorted(sortMethod).forEachOrdered(mtd -> {
                 write(lines, format, indexes, METHOD, mtd.meta, mtd);
 
-                mtd.getParameters().sorted((a,b) -> a.getIndex() - b.getIndex()).forEachOrdered(par ->
+                mtd.getParameters().sorted(sortParam).forEachOrdered(par ->
                     write(lines, format, indexes, PARAMETER, par.meta, par)
                 );
             });

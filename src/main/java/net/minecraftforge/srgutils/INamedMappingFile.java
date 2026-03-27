@@ -28,7 +28,13 @@ public interface INamedMappingFile {
     }
 
     List<String> getNames();
+    // Returns a map of the first two names.
+    IMappingFile getMap();
     IMappingFile getMap(String from, String to);
+
+    default void write(Path path) throws IOException {
+        write(path, Format.TSRG2);
+    }
 
     default void write(Path path, Format format) throws IOException {
         write(path, format, getNames().toArray(new String[getNames().size()]));
