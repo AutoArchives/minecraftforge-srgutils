@@ -170,7 +170,8 @@ class MappingFile implements IMappingFile {
                 break;
         }
 
-        Files.createDirectories(path.getParent());
+        if (path.getParent() != null)
+            Files.createDirectories(path.getParent());
         try (OutputStream fos = Files.newOutputStream(path)) {
             OutputStream out = fos;
             if (path.getFileName().toString().endsWith(".gz"))
