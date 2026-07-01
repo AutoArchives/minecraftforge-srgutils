@@ -54,7 +54,8 @@ license {
 tasks.named('jar', Jar) {
     manifest {
         attributes([
-            'Automatic-Module-Name': 'net.minecraftforge.srgutils'
+            'Automatic-Module-Name': 'net.minecraftforge.srgutils',
+            'Main-Class':            'net.minecraftforge.srgutils.Main'
         ])
         attributes([
             'Specification-Title'   : projectDisplayName,
